@@ -2,6 +2,7 @@
 import json
 import pymysql
 import os
+import sys
 from datetime import datetime
 
 def get_db_connection():
@@ -22,7 +23,6 @@ def get_hosts_from_db():
     conn = get_db_connection()
     try:
         with conn.cursor(pymysql.cursors.DictCursor) as cursor:
-            # Modify this query according to your database schema
             cursor.execute("""
                 SELECT 
                     h.hostname,
@@ -76,13 +76,40 @@ def build_inventory():
         region_group = f"region_{host['region']}"
         if region_group not in inventory:
             inventory[region_group] = {'hosts': []}
-        inventory[region_group]['hosts'].append(host['hostname'])
+        region_group['hosts'].append(host['hostname'])
     
     return inventory
 
+def empty_inventory():
+    return {'_meta': {'hostvars': {}}}
+
+def host_vars(hostname):
+    """Return variables for a specific host"""
+    hosts = get_hosts_from_db()
+    for host in hosts:
+        if host['hostname'] == hostname:
+            return {
+                'ansible_host': host['ip_address'],
+                'ansible_user': host['ssh_user'],
+                'ansible_port': host['ssh_port']
+            }
+    return {}
+
 def main():
-    inventory = build_inventory()
-    print(json.dumps(inventory, indent=2))
+    # Make sure script is executable
+    if not os.access(__file__, os.X_OK):
+        os.chmod(__file__, 0o755)
+
+    # Add argument handling as required by Ansible
+    if len(sys.argv) == 2 and sys.argv[1] == '--list':
+        inventory = build_inventory()
+        print(json.dumps(inventory))
+    elif len(sys.argv) == 3 and sys.argv[1] == '--host':
+        vars = host_vars(sys.argv[2])
+        print(json.dumps(vars))
+    else:
+        sys.stderr.write("Usage: %s --list or --host <hostname>\n" % sys.argv[0])
+        sys.exit(1)
 
 if __name__ == '__main__':
     main()
