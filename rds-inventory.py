@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
-import json # json
-import pymysql # one more change
+import json
+import psycopg2
+import psycopg2.extras
 import os
 import sys
 from datetime import datetime
@@ -11,18 +12,20 @@ def get_db_connection():
     db_user = os.getenv('DB_USER', 'user')
     db_pass = os.getenv('DB_PASS', 'password')
     db_name = os.getenv('DB_NAME', 'inventory_db')
+    db_port = os.getenv('DB_PORT', '5432')
     
-    return pymysql.connect(
+    return psycopg2.connect(
         host=db_host,
         user=db_user,
         password=db_pass,
-        database=db_name
+        dbname=db_name,
+        port=db_port
     )
 
 def get_hosts_from_db():
     conn = get_db_connection()
     try:
-        with conn.cursor(pymysql.cursors.DictCursor) as cursor:
+        with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cursor:
             cursor.execute("""
                 SELECT 
                     h.hostname,
@@ -35,7 +38,8 @@ def get_hosts_from_db():
                 FROM hosts h
                 WHERE h.active = 1
             """)
-            return cursor.fetchall()
+            # Convert DictRow objects to regular dictionaries
+            return [dict(row) for row in cursor.fetchall()]
     finally:
         conn.close()
 
@@ -76,7 +80,7 @@ def build_inventory():
         region_group = f"region_{host['region']}"
         if region_group not in inventory:
             inventory[region_group] = {'hosts': []}
-        region_group['hosts'].append(host['hostname'])
+        inventory[region_group]['hosts'].append(host['hostname'])
     
     return inventory
 
