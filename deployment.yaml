@@ -1,5 +1,5 @@
 ---
-- hosts: all
+- hosts: aws
   become: yes
   tasks:
     - name: Stop Tomcat service
@@ -11,12 +11,19 @@
     #   command: mv /opt/tomcat/webapps/campus /opt/tomcat/webapps/campus_backup
     #   ignore_errors: yes
 
+    - name: Ensure destination directory exists
+      file:
+        path: /opt/tomcat/webapps/campus
+        state: directory
+        mode: '0755'
+
     - name: Download new application from S3
       aws_s3:
         bucket: "ic-dumpdb-471774948982"
         object: "campusDE.jsp"
-        dest: "/opt/tomcat/webapps/campus/"
+        dest: "/opt/tomcat/webapps/campus/campusDE.jsp"
         mode: get
+
 
     # - name: Unzip new application
     #   unarchive:
