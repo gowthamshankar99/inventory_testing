@@ -1,0 +1,38 @@
+---
+- hosts: all
+  become: yes
+  tasks:
+    - name: Stop Tomcat service
+      systemd:
+        name: tomcat
+        state: stopped
+
+    - name: Backup current application
+      command: mv /opt/tomcat/webapps/campus /opt/tomcat/webapps/campus_backup
+      ignore_errors: yes
+
+    - name: Download new application from S3
+      aws_s3:
+        bucket: "ic-dumpdb-471774948982"
+        object: "campusDE.jsp"
+        dest: "/opt/tomcat/webapps/campus/"
+        mode: get
+
+    # - name: Unzip new application
+    #   unarchive:
+    #     src: "/home/ec2-user/Campus.zip"
+    #     dest: "/home/ec2-user/"
+    #     remote_src: yes
+
+    # - name: Move new application to Tomcat webapps
+    #   command: mv /home/ec2-user/campus2005 /opt/tomcat/webapps/campus
+
+    - name: Start Tomcat service
+      systemd:
+        name: tomcat
+        state: started
+      register: tomcat_service
+
+    - name: Print Tomcat service status
+      debug:
+        var: tomcat_service
