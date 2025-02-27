@@ -1,27 +1,15 @@
 ---
-- hosts: all
+- hosts: aws
   become: yes
   tasks:
-    - name: Install python3-pip
-      yum:
-        name: python3-pip
-        state: present
-
-    - name: Install boto3 and botocore
-      pip:
-        name:
-          - boto3
-          - botocore
-        state: present
-        
     - name: Stop Tomcat service
       systemd:
         name: tomcat
         state: stopped
 
-    - name: Backup current application
-      command: mv /opt/tomcat/webapps/campus /opt/tomcat/webapps/campus_backup
-      ignore_errors: yes
+    # - name: Backup current application
+    #   command: mv /opt/tomcat/webapps/campus /opt/tomcat/webapps/campus_backup
+    #   ignore_errors: yes
 
     - name: Download new application from S3
       aws_s3:
