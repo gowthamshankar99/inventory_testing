@@ -17,6 +17,14 @@
         state: directory
         mode: '0755'
 
+    - name: Install Python AWS SDK
+      pip:
+        name: 
+          - boto3
+          - botocore
+        state: present
+      become: yes        
+
     - name: Download new application from S3
       aws_s3:
         bucket: "ic-dumpdb-471774948982"
