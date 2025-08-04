@@ -13,3 +13,9 @@ jobs:
     steps:
       - name: Say Hello
         run: echo "Hello from your self-hosted runner!"
+
+  job-2:
+    runs-on: self-hosted
+    steps:
+      - name: say hello from job2
+        run: echo "Hello from job 2"
