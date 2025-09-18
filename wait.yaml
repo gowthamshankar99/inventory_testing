@@ -1,5 +1,5 @@
 ---
-- name: Playbook with wait times
+- name: Playbook with wait time
   hosts: localhost
   gather_facts: false
   tasks:
