@@ -26,9 +26,23 @@ jobs:
       - name: Upload to S3
         run: aws s3 cp nginx-app.zip s3://softdocs-deployment-testing-471774948982/nginx-app.zip
 
+#      - name: Create Deployment
+#        run: |
+#          aws deploy create-deployment \
+#            --application-name nginx-demo-app \
+#            --deployment-group-name dev \
+#            --s3-location bucket=softdocs-deployment-testing-471774948982,key=nginx-app.zip,bundleType=zip
       - name: Create Deployment
+        id: deploy
         run: |
-          aws deploy create-deployment \
+          DEPLOYMENT_ID=$(aws deploy create-deployment \
             --application-name nginx-demo-app \
             --deployment-group-name dev \
-            --s3-location bucket=softdocs-deployment-testing-471774948982,key=nginx-app.zip,bundleType=zip
+            --s3-location bucket=softdocs-deployment-testing-471774948982,key=nginx-app.zip,bundleType=zip \
+            --query "deploymentId" --output text)
+          echo "deployment_id=$DEPLOYMENT_ID" >> $GITHUB_OUTPUT
+      
+      - name: Wait for Deployment to Finish
+        run: |
+          aws deploy wait deployment-successful --deployment-id ${{ steps.deploy.outputs.deployment_id }}
+          aws deploy get-deployment --deployment-id ${{ steps.deploy.outputs.deployment_id }}
